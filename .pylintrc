@@ -1,0 +1,6 @@
+[FORMAT]
+max-line-length = 79
+extension-pkg-whitelist = lxml
+
+[MESSAGES CONTROL]
+disable = bad-continuation
