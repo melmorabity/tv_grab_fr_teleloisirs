@@ -383,11 +383,13 @@ class TeleLoisirs:
         # Start time
         try:
             start = datetime.strptime(
-                broadcast.get("startedAt", ""), self._API_DATETIME_FORMAT,
+                broadcast.get("startedAt", ""),
+                self._API_DATETIME_FORMAT,
             ).strftime(self._XMLTV_DATETIME_FORMAT)
         except ValueError:
             logging.debug(
-                "Broadcast %s has no valid start time, skipping", broadcast_id,
+                "Broadcast %s has no valid start time, skipping",
+                broadcast_id,
             )
             return None
 
@@ -453,7 +455,8 @@ class TeleLoisirs:
             if not credit:
                 if position:
                     logging.debug(
-                        'No XMLTV credit defined for function "%s"', position,
+                        'No XMLTV credit defined for function "%s"',
+                        position,
                     )
                 continue
 
@@ -472,24 +475,35 @@ class TeleLoisirs:
 
         # Date the programme or film was finished
         self._xmltv_element_with_text(
-            "date", program.get("releasedYear"), parent=xmltv_program,
+            "date",
+            program.get("releasedYear"),
+            parent=xmltv_program,
         )
 
         # Type of programme
         genres = program.get("formatGenre", {})
         genre = genres.get("format", {}).get("title", "").capitalize()
         self._xmltv_element_with_text(
-            "category", genre, parent=xmltv_program, lang="fr",
+            "category",
+            genre,
+            parent=xmltv_program,
+            lang="fr",
         )
         if genre != (
             sub_genre := genres.get("genre", {}).get("name", "").capitalize()
         ):
             self._xmltv_element_with_text(
-                "category", sub_genre, parent=xmltv_program, lang="fr",
+                "category",
+                sub_genre,
+                parent=xmltv_program,
+                lang="fr",
             )
         etsi_category = self._API_ETSI_CATEGORIES.get(genre)
         self._xmltv_element_with_text(
-            "category", etsi_category, parent=xmltv_program, lang="en",
+            "category",
+            etsi_category,
+            parent=xmltv_program,
+            lang="en",
         )
         if genre and not etsi_category:
             logging.debug('No ETSI category found for genre "%s"', genre)
@@ -509,7 +523,9 @@ class TeleLoisirs:
                 "icon",
                 parent=xmltv_program,
                 src=self._get_icon_url(
-                    url_template, image.get("width"), image.get("height"),
+                    url_template,
+                    image.get("width"),
+                    image.get("height"),
                 ),
                 width=image.get("width"),
                 height=image.get("height"),
@@ -517,7 +533,9 @@ class TeleLoisirs:
 
         # URL where you can find out more about the programme
         self._xmltv_element_with_text(
-            "url", program.get("_links", {}).get("url"), parent=xmltv_program,
+            "url",
+            program.get("_links", {}).get("url"),
+            parent=xmltv_program,
         )
 
         # Country where the programme was made or one of the countries in a
@@ -525,7 +543,10 @@ class TeleLoisirs:
         if countries := program.get("country", ""):
             for country in countries.split(" - "):
                 self._xmltv_element_with_text(
-                    "country", country, parent=xmltv_program, lang="fr",
+                    "country",
+                    country,
+                    parent=xmltv_program,
+                    lang="fr",
                 )
 
         # Episode number
@@ -575,7 +596,8 @@ class TeleLoisirs:
         # Previously shown programme?
         if broadcast.get("isRebroadcast"):
             self._xmltv_element(
-                "previously-shown", parent=xmltv_program,
+                "previously-shown",
+                parent=xmltv_program,
             )
         # Premiere programme?
         elif broadcast.get("isNew"):
@@ -667,7 +689,15 @@ class TeleLoisirs:
             ]
 
             for broadcast, future in zip(broadcasts.values(), futures):
-                program = future.result().get("item", {})
+                try:
+                    program = future.result().get("item", {})
+                except TeleLoisirsException as ex:
+                    logging.warning(
+                        "Unable to retrieve program data %s: %s",
+                        broadcast.get("program", {}).get("id"),
+                        ex,
+                    )
+                    program = {}
                 yield self._to_xmltv_program(broadcast, program)
 
     def _to_xmltv(
@@ -894,7 +924,8 @@ def _main() -> None:
     elif args.debug:
         logging_level = logging.DEBUG
     logging.basicConfig(
-        level=logging_level, format="%(levelname)s: %(message)s",
+        level=logging_level,
+        format="%(levelname)s: %(message)s",
     )
 
     try:
