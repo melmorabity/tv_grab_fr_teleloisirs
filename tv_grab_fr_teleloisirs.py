@@ -769,7 +769,7 @@ def _print_description() -> None:
 
 
 def _print_version() -> None:
-    print("This is {} version {}".format(_PROGRAM, __version__))
+    print(f"This is {_PROGRAM} version {__version__}")
 
 
 def _print_capabilities() -> None:
