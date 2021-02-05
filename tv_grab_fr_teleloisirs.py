@@ -852,7 +852,7 @@ def _read_configuration(
     channel_ids = set()
     with config_file.open("r") as config_reader:
         for line in config_reader:
-            match = re.search(r"^\s*channel\s*=\s*(.+)\s*$", line)
+            match = re.search(r"^\s*channel\s*=\s*(.+?)(?:\s*#.*)?$", line)
             if match is None:
                 continue
 
@@ -863,17 +863,19 @@ def _read_configuration(
     return list(channel_ids)
 
 
-def _write_configuration(channel_ids: List[str], config_file: Path) -> None:
+def _write_configuration(
+    channel_ids: Dict[str, str], config_file: Path
+) -> None:
 
     config_file.parent.mkdir(parents=True, exist_ok=True)
 
     with open(config_file, "w") as config:
-        for channel_id in channel_ids:
-            print("channel={}".format(channel_id), file=config)
+        for channel_name, channel_id in channel_ids.items():
+            print(f"channel={channel_id} # {channel_name}", file=config)
 
 
 def _configure(available_channels: Dict[str, str], config_file: Path) -> None:
-    channel_ids = []
+    channel_ids = {}
     answers = ["yes", "no", "all", "none"]
     select_all = False
     select_none = False
@@ -895,7 +897,7 @@ def _configure(available_channels: Dict[str, str], config_file: Path) -> None:
             select_all = answer == "all"
             select_none = answer == "none"
         if select_all or answer == "yes":
-            channel_ids.append(channel_id)
+            channel_ids[channel_name] = channel_id
         if select_all:
             print(f"{channel_name} yes", file=sys.stderr)
         elif select_none:
