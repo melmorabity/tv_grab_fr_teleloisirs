@@ -155,6 +155,7 @@ class TeleLoisirs:
             self._session.close()
 
     @staticmethod
+    # pylint: disable=unused-argument
     def _requests_raise_status(response: Response, *args, **kwargs) -> None:
         try:
             response.raise_for_status()
@@ -165,9 +166,9 @@ class TeleLoisirs:
             try:
                 raise TeleLoisirsException(
                     response.json().get("message") or ex
-                )
+                ) from ex
             except ValueError:
-                raise TeleLoisirsException(ex)
+                raise TeleLoisirsException(ex) from ex
 
     def _query_api(
         self, path: str, **query: Union[int, str]
