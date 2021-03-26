@@ -214,30 +214,31 @@ class TeleLoisirs:
 
     def _get_channels(self) -> Dict[str, Any]:
         channels = {}
-        for package in self._query_api("v2/bouquets.json", limit="auto").get(
+        for channel in self._query_api("v2/channels.json", limit="auto").get(
             "items", []
         ):
-            for channel in package.get("channelBouquets", []):
-                channel_data = channel.get("channel", {})
-                channel_id = channel_data.get("id")
-                channel_name = channel_data.get("title")
-                if not channel_id or not channel_name:
-                    continue
-                image = channel_data.get("image", {})
-                channels[self._teleloisirs_to_xmltv_id(channel_id)] = {
-                    "id": channel_id,
-                    "display-name": channel_name,
-                    "icon": {
-                        "src": self._get_icon_url(
-                            image.get("urlTemplate"),
-                            image.get("width"),
-                            image.get("height"),
-                        ),
-                        "width": image.get("width"),
-                        "height": image.get("height"),
-                    },
-                    "url": channel_data.get("_links", {}).get("url"),
-                }
+            channel_id = channel.get("id")
+            channel_name = channel.get("title")
+            if not channel_id or not channel_name:
+                continue
+
+            channel_xmltv_id = self._teleloisirs_to_xmltv_id(channel_id)
+            image = channel.get("image") or {}
+
+            channels[channel_xmltv_id] = {
+                "id": channel_id,
+                "display-name": channel_name,
+                "icon": {
+                    "src": self._get_icon_url(
+                        image.get("urlTemplate"),
+                        image.get("width"),
+                        image.get("height"),
+                    ),
+                    "width": image.get("width"),
+                    "height": image.get("height"),
+                },
+                "url": channel.get("_links", {}).get("url"),
+            }
 
         return channels
 
@@ -311,9 +312,9 @@ class TeleLoisirs:
         )
 
         # Icon associated to the programme
-        self._xmltv_element(
-            "icon", parent=xmltv_channel, **channel_data.get("icon", {})
-        )
+        if icon := channel_data.get("icon"):
+            if icon.get("src"):
+                self._xmltv_element("icon", parent=xmltv_channel, **icon)
 
         # URL where you can find out more about the channel
         self._xmltv_element_with_text(
